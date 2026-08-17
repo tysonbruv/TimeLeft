@@ -1115,7 +1115,6 @@ svg {
       let screen = "welcome";
       let mainModeIndex = 0;
       let noticeTimer = 0;
-      let batteryLevel = 82;
 
       function loadModel() {
         try {
@@ -1215,6 +1214,13 @@ svg {
   const totalMinutesLeft = Math.floor(totalSecondsLeft / 60);
   const totalHoursLeft = Math.floor(totalSecondsLeft / (60 * 60));
 
+  const totalLifeSeconds = totalLifeDays * 24 * 60 * 60;
+
+  const percentLeft = Math.max(
+    0,
+    Math.min(100, (totalSecondsLeft / totalLifeSeconds) * 100)
+  );
+
   return {
     now: now,
     lived: lived,
@@ -1231,6 +1237,8 @@ svg {
     minutesLeft: totalMinutesLeft,
 
     secondsLeft: Math.floor(totalSecondsLeft),
+
+    percentLeft: percentLeft,
 
     hoursToday: Math.max(0, 23 - now.getHours())
   };
@@ -1360,7 +1368,7 @@ svg {
             '<span class="tl-label">' + escaped(current.label) + "</span>" +
           "</button>" +
           '<div class="tl-footer"><button class="tl-link-button" type="button" data-action="settings">Settings</button>' +
-            '<span data-role="battery">' + batteryLevel + "%</span></div>";
+  '<span data-role="percent-left">' + Math.floor(stats.percentLeft) + "%</span></div>";
       }
 
       function renderSettings() {
@@ -1505,17 +1513,6 @@ svg {
       window.setInterval(function () {
         if (screen === "main") renderMain();
       }, 1000);
-
-      if (navigator.getBattery) {
-        navigator.getBattery().then(function (battery) {
-          function updateBattery() {
-            batteryLevel = Math.round(battery.level * 100);
-            if (screen === "main") renderMain();
-          }
-          updateBattery();
-          battery.addEventListener("levelchange", updateBattery);
-        }).catch(function () {});
-      }
 
       render();
     })();
