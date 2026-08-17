@@ -1100,7 +1100,16 @@ svg {
       const storageKey = "timeleft.web.v1";
       const totalLifeDays = 100 * 365;
       const monthStarts = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-      const mainModes = ["days", "time", "age", "years", "months"];
+      const mainModes = [
+  "days",
+  "time",
+  "age",
+  "years",
+  "months",
+  "hours",
+  "minutes",
+  "seconds"
+];
 
       let model = loadModel();
       let screen = "welcome";
@@ -1174,22 +1183,58 @@ svg {
       }
 
       function computeStats() {
-        const now = logicalNow();
-        const todaySerial = noLeapSerial(now.getFullYear(), now.getMonth() + 1, now.getDate());
-        const birthSerial = noLeapSerial(model.birth.year, model.birth.month, model.birth.day);
-        const lived = Math.max(0, todaySerial - birthSerial);
-        const taken = Math.max(0, Number(model.daysTakenOff) || 0);
-        const left = Math.max(0, totalLifeDays - lived - taken);
-        return {
-          now: now,
-          lived: lived,
-          left: left,
-          age: Math.floor(lived / 365),
-          yearsLeft: Math.floor(left / 365),
-          monthsLeft: Math.floor(left / (365 / 12)),
-          hoursToday: Math.max(0, 23 - now.getHours())
-        };
-      }
+  const now = logicalNow();
+
+  const todaySerial = noLeapSerial(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    now.getDate()
+  );
+
+  const birthSerial = noLeapSerial(
+    model.birth.year,
+    model.birth.month,
+    model.birth.day
+  );
+
+  const lived = Math.max(0, todaySerial - birthSerial);
+  const taken = Math.max(0, Number(model.daysTakenOff) || 0);
+
+  const left = Math.max(0, totalLifeDays - lived - taken);
+
+  const secondsIntoToday =
+    (now.getHours() * 60 * 60) +
+    (now.getMinutes() * 60) +
+    now.getSeconds();
+
+  const totalSecondsLeft = Math.max(
+    0,
+    (left * 24 * 60 * 60) - secondsIntoToday
+  );
+
+  const totalMinutesLeft = Math.floor(totalSecondsLeft / 60);
+  const totalHoursLeft = Math.floor(totalSecondsLeft / (60 * 60));
+
+  return {
+    now: now,
+    lived: lived,
+    left: left,
+
+    age: Math.floor(lived / 365),
+
+    yearsLeft: Math.floor(left / 365),
+
+    monthsLeft: Math.floor(left / (365 / 12)),
+
+    hoursLeft: totalHoursLeft,
+
+    minutesLeft: totalMinutesLeft,
+
+    secondsLeft: Math.floor(totalSecondsLeft),
+
+    hoursToday: Math.max(0, 23 - now.getHours())
+  };
+}
 
       function formatClock(date) {
         return new Intl.DateTimeFormat(undefined, {
@@ -1259,12 +1304,54 @@ svg {
         const stats = computeStats();
         const mode = mainModes[mainModeIndex];
         const values = {
-          days: { value: stats.left.toLocaleString(), label: "Days Left", clock: false },
-          time: { value: formatClock(stats.now), label: "Time", clock: true },
-          age: { value: stats.age.toLocaleString(), label: "Years Old", clock: false },
-          years: { value: stats.yearsLeft.toLocaleString(), label: "Years Left", clock: false },
-          months: { value: stats.monthsLeft.toLocaleString(), label: "Months Left", clock: false }
-        };
+  days: {
+    value: stats.left.toLocaleString(),
+    label: "Days Left",
+    clock: false
+  },
+
+  time: {
+    value: formatClock(stats.now),
+    label: "Time",
+    clock: true
+  },
+
+  age: {
+    value: stats.age.toLocaleString(),
+    label: "Years Old",
+    clock: false
+  },
+
+  years: {
+    value: stats.yearsLeft.toLocaleString(),
+    label: "Years Left",
+    clock: false
+  },
+
+  months: {
+    value: stats.monthsLeft.toLocaleString(),
+    label: "Months Left",
+    clock: false
+  },
+
+  hours: {
+    value: stats.hoursLeft.toLocaleString(),
+    label: "Hours Left",
+    clock: false
+  },
+
+  minutes: {
+    value: stats.minutesLeft.toLocaleString(),
+    label: "Minutes Left",
+    clock: false
+  },
+
+  seconds: {
+    value: stats.secondsLeft.toLocaleString(),
+    label: "Seconds Left",
+    clock: false
+  }
+};
         const current = values[mode];
         view.innerHTML =
           '<p class="tl-kicker">' + stats.hoursToday + " hours left today</p>" +
